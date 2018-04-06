@@ -1,0 +1,143 @@
+---
+title: "36-315 Lab 08, Spring 2018"
+author: "Ross Hemmel (rhemmel), Joshua Huang (jzh1), Julie Kim (juliek1), Jinhee Lee (jinheel1)"
+date: "Due Friday, March 30, 2018 (6:30pm) on Canvas"
+output: 
+  html_document:
+    toc:  true
+    toc_float:  true
+    code_folding:  show
+---
+
+
+##  Lab 08:  Choose your Dataset, Intro to Maps - All as a team!
+
+
+***
+***
+
+
+# Problem 0
+
+* "We used Google's R style guide."
+* "This submission is for the following group: Ross Hemmel (rhemmel), Joshua Huang (jzh1), Julie Kim (juliek1), Jinhee Lee (jinheel1)
+* "We received assistance from Piazza on this assignment."
+
+
+***
+***
+
+
+# Problem 1
+
+a. First dataset
+    - Yelp Dataset
+    - Kaggle
+    - https://www.kaggle.com/yelp-dataset/yelp-dataset/data
+    - Which restaurants are most successful in certain regions of America? Use variables: stars (ratings), reviews, checkins, range
+    - Are there common attributes in that predict better ratings? (good for kids, WiFi, happy hour, etc.)
+b. Second dataset
+    - Ford GoBike's Trip Data
+    - Ford GoBike
+    - https://www.fordgobike.com/system-data
+    - Peak times of use by day of the week, time of day, season
+    - Popular routes, stations, optimal distances (most common rides)
+c. Third dataset
+    - Global Terrorism Dataset
+    - Global Terrorism Database
+    - http://start.umd.edu/gtd/
+    - How has a specific group's activities changed over time? Variables: Perpetrator group, target type, fatalities, injured
+    - What countries receive the most attacks (how has this changed over time)? Variables: Country, city, attack type
+d. Fourth dataset
+    - Trending YouTube Video Statistics
+    - Kaggle
+    - https://www.kaggle.com/datasnaek/youtube-new/data 
+    - What are the most popular/trending categories for each country (views, category id, likes, comment_ount, country)
+    - Does publish time have an affect on trending videos? (publish time, likes, comment_count, views, number of trending videos per time)
+
+
+***
+***
+
+
+# Problem 2
+
+a. (5 points)  stat_density2d() overlays a 2D density estimation on top of plots
+```{r, message = FALSE, warning = FALSE}
+library(ggplot2)
+library(ggmap)
+```
+
+b. (3 points)  `get_map()` requests the Google Maps ("google"), OpenStreetMap ("osm"), Stamen Maps ("stamen") or Naver Map ("cloudmade") servers for a map.
+
+c. (3 points)  The zoom parameter takes an integer from 3-21 (3 for continent, 21 for building), from least to most zoom, with a default value of 10 (city). If we wanted to display a square with width 1 mile, perhaps a value of 17 would be appropriate.
+
+d. (3 points)  The different maptype values include "terrain", "terrain-background", "satellite", "roadmap", and "hybrid" (google maps), "watercolor", and "toner" (stamen maps), or a positive integer for cloudmade maps.
+
+e. (10 points)  The hybrid map shows the location surrounding the given geolocations `lon = -79.944248`, `lat = 40.4415861`. The `get_map` function is creating the base of the map pulled off of google, while the `ggmap` overlays any graphic data we need (in this case, axes titles, etc.).
+
+```{r, warning = FALSE, message = FALSE}
+library(ggmap)
+library(mapproj)
+
+map_base <- get_map(location = c(lon = -79.944248, lat = 40.4415861),
+                    color = "color",
+                    source = "google",
+                    maptype = "hybrid",
+                    zoom = 16)
+
+map_object <- ggmap(map_base,
+                    extent = "device",
+                    ylab = "Latitude",
+                    xlab = "Longitude")
+map_object
+```
+
+f. (3 points)  R will return an error saying the zoom parameter will only take whole numbers between 1 and 21.
+
+```{r, warning = FALSE, message = FALSE, eval = FALSE}
+map_base <- get_map(location = c(lon = -79.944248, lat = 40.4415861),
+                    color = "color",
+                    source = "google",
+                    maptype = "hybrid",
+                    zoom = 16.5)
+
+map_object <- ggmap(map_base,
+                    extent = "device",
+                    ylab = "Latitude",
+                    xlab = "Longitude")
+map_object
+```
+
+g. (3 points)  "gg"     "ggplot"
+
+
+***
+***
+
+
+# Problem 3
+
+a. (5 points)  40.4442567, -79.9554277
+
+b. (5 points)  New latitude/longitude coordinate pair: 40.4442567,-79.9554277. The coordinates don't change with zoom level.
+
+c. (20 points)  The code output displays a black and white roadmap of the area surrounding the Cathedral of Learning.
+
+```{r, warning = FALSE, message = FALSE}
+map_base <- get_map(location = c(lon = -79.9554277, lat = 40.4442567),
+                    color = "bw",
+                    source = "google",
+                    maptype = "roadmap",
+                    zoom = 13)
+
+map_object <- ggmap(map_base,
+                    extent = "device",
+                    ylab = "Latitude",
+                    xlab = "Longitude")
+map_object
+```
+
+
+***
+***

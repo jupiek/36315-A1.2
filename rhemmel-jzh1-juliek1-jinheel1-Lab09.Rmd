@@ -1,0 +1,104 @@
+---
+title: "36-315 Lab 09, Spring 2018"
+author: "Ross Hemmel (rhemmel), Joshua Huang (jzh1), Julie Kim (juliek1), Jinhee Lee (jinheel1)"
+date: "Due Friday, April 6, 2018 (6:30pm) on Canvas"
+output: 
+  html_document:
+    toc:  true
+    toc_float:  true
+    code_folding:  show
+---
+
+
+##  Lab 09:  Static Graphics Group Project
+
+
+***
+***
+
+
+#  Problem 1
+
+(10 points)
+
++  Ross Hemmel is from New Jersey, and graduating in the spring.
++  Joshua Huang is a Junior studying Information Systems. 
++  Julie Kim is a Junior studying Policy & Management and Statistics.
++  Jinhee Lee is a Junior from Georgia majoring in Statistics with a minor in Game Design. 
+
+
+***
+***
+
+
+#  Problem 2
+
+(20 points)
+
+* Our team has signed up on the spreadsheet for poster review on Tuesday April 10 at 16:15 in room BH 140D.
+* All team members (Ross Hemmel, Joshua Huang, Julie Kim, Jinhee Lee) will attend the poster review on April 10.
+
+
+***
+***
+
+
+#  Problem 3
+
+(40 points)
+
++  https://s3.amazonaws.com/fordgobike-data/2017-fordgobike-tripdata.csv
++  The data is written as a csv file, with 519700 rows and 15 columns. Each row represents one trip. Each column contains the following corresponding data for each trip:
+    - `duration_sec` = Trip Duration (seconds)
+    - `start_time` = Start Time and Date
+    - `end_time` = End Time and Date
+    - `start_station_id` = Start Station ID
+    - `start_station_name` = Start Station Name
+    - `start_station_latitude` = Start Station Latitude
+    - `start_station_longitude` = Start Station Longitude
+    - `end_station_id` = End Station ID
+    - `end_station_name` = End Station Name
+    - `end_station_latitude` = End Station Latitude
+    - `end_station_longitude` = End Station Longitude
+    - `bike_id` = Bike ID
+    - `user_type` = User Type (Subscriber or Customer – “Subscriber” = Member or “Customer” = Casual)
+    - `member_birth_year` = Member Year of Birth
+    - `member_gender` = Member Gender
+    Our categorical variables are `start_station_id`, `start_station_name`, `end_station_id`, `end_station_name`, `bike_id`, `user_type`, and `member_gender`. Our continuous variables are `duration_sec`, `start_time`, `end_time`, and `member_birth_year`. We also have geolocation data on in `start_station_latitude`, `start_station_longitude`, `end_station_latitude`, and `end_station_longitude`. We may want to limit our observed data to the rows containing information on users (gender, birth year) so that our findings are consistent.
+
+
+***
+***
+
+
+#  Problem 4
+
+(20 points)
+
+Brainstorm at least three questions you'd like to answer with your dataset.
+1. **Relationship between start/end time and date and year of birth. In what time ranges in the day do certain age groups use Ford GoBikes the most? In what months do these age groups bike the most, for example--is there a heavier use of bikes during the school year for students?** Plot number of trips per day over a year, coloring lines by age groups, for example.
+2. **What are peak times of use by day of the week? Time of day? Month/season?** Line plots with shading underneath, or overlaid density plots to show differences in proportion. 
+3. **What are the most popular routes, stations, or optimal distances?** In answering this question, we would use `ggmap()` and add segments indicating euclidean routes between stations. All stations will be represented by a point, and sized by volume (number of trips).
+
+
+***
+***
+
+
+#  Problem 5
+
+(2 points each)
+
+(a) The `png()` help documentation also displays the functions `bmp()`, `jpeg()` and `tiff()`. 
+
+(b) Width and height are input parameters in inches for the images in the pdf() function.
+
+(c) The units parameter can control the height and width. The default units are px or pixels.
+
+(d) The types of images that can be saved are "eps", "ps", "tex" (pictex), "pdf", "jpeg", "tiff", "png", "bmp", "svg" or "wmf".
+
+(e) The dpi parameter controls the plot resolution. Dpi stands for dots per inch.
+
+
+***
+***
