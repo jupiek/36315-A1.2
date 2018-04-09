@@ -1,0 +1,122 @@
+---
+title: "Static Graphics Project"
+author: "Julie Kim"
+date: "4/6/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Read-In
+===
+
+1. Load necessary packages
+2. Read in `tripdata.csv`, save to variable `trip.data`
+3. Remove rows of `trip.data` that do not contain user information (`member_birth_year`, `member_gender`)
+4. Check dimensions and first several rows of our new dataframe
+
+```{r, message = FALSE, warning = FALSE}
+library(ggplot2)
+library(tidyverse)
+library(plyr)
+library(ggmap)
+
+trip.data = read.csv("tripdata.csv")
+
+trip.data = trip.data[trip.data$member_gender != "",]
+dim(trip.data)
+head(trip.data)
+```
+
+Graph #1
+===
+
++ Geological coordinates of the San Francisco Bay Area: 37.778786, -122.350061
+
+```{r, message = FALSE, warning = FALSE}
+# Find the number of departures and arrivals 
+# Use data to observe which stations have the highest traffic
+departure.freq = table(trip.data$start_station_id)
+arrival.freq = table(trip.data$end_station_id)
+
+rbind(trip.data$start_station_id, trip.data$end_station_id)[1:5]
+unique(trip.data$start_station_id)
+coordinates = merge(unique(trip.data$start_station_id), trip.data$start_station_latitude)
+                
+map.base = get_map(location = c(lon = -122.350061, lat = 37.778786),
+                    source = "google",
+                    maptype = "roadmap")
+
+map.stations = ggmap(map.base) + 
+  geom_point(data = trip.data, size = departure.freq,
+             aes(x = start_station_longitude, y = start_station_latitude)) +
+  #geom_segment(data = trip.data, 
+  #             lwd = 0.2,
+  #             aes(x = start_station_longitude, y = start_station_latitude, 
+  #                 xend = end_station_longitude, yend = end_station_latitude)) + 
+  scale_x_continuous(limits = c(-122.5, -122.2)) + 
+  scale_y_continuous(limits = c(37.7, 37.9))
+
+map.stations
+```
+
+Graph #2
+===
+
+
+```{r, message = FALSE, warning = FALSE}
+tcust = trip.data[trip.data$user_type == 'Customer', ]
+tsub = trip.data[trip.data$user_type == 'Subscriber', ]
+trip.data2 <- transform(trip.data, age = as.integer(format(Sys.Date(), "%Y")) - trip.data$member_birth_year)
+trip.data2[!(is.na(trip.data2$member_gender) | trip.data2$member_gender==""), ]
+trip.data2 <- transform(trip.data2, day = weekdays(as.Date(trip.data2$start_time)))
+trip.data2 <- transform(trip.data2, hour = hour(trip.data2$start_time))
+trip.data2$hour<- as.factor(trip.data2$hour)
+trip.data2$day<- as.factor(trip.data2$day)
+trip.data2
+
+```
+
+```{r, message = FALSE, warning = FALSE}
+ggplot(data = trip.data2, aes(x = duration_sec, fill = member_gender)) + 
+      geom_histogram(aes(y = ..density..), bins = 50)  +  
+      scale_x_continuous(limits = c(0, 3500)) + 
+      labs(title = "Trip Duration by Gender",
+       x = "Trip Duration (secs)",
+       y = "Density",
+       caption = "Source: Ford Bike Data",
+       fill = "Gender")
+```
+
+Graph #3
+===
+
+```{r, message = FALSE, warning = FALSE}
+library(dplyr)
+trip.data2 %>%
+  group_by(day, hour) %>%
+  summarize(total.rides = n(),
+    avg.duration = mean(duration_sec)) -> day_hour_rides
+
+day_hour_rides %>%
+  ungroup() %>%
+  select(hour, day, total.rides, avg.duration) %>%
+  mutate(total_duration = total.rides * avg.duration, 
+         hour = factor(hour, levels = (0:23))) %>%
+  group_by(hour, day) %>%
+  summarise(count.rides = sum(total.rides), total.duration = sum(total_duration)) -> df.1
+df.1
+```
+
+```{r, message = FALSE, warning = FALSE}
+ggplot(data = df.1, aes(x = day, y = hour, fill = count.rides)) + 
+  geom_tile() + 
+  scale_fill_continuous(low = 'white', high = 'blue') +
+  labs(title = "Bike Usage By Hour of Day",
+       x = "Day of Week",
+       y = "Hour of Day",
+       caption = "Source: Ford Bike Data",
+       fill = "Number of Rides")
+```
