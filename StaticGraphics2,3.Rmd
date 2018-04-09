@@ -94,6 +94,7 @@ Graph #3
 ===
 
 ```{r, message = FALSE, warning = FALSE}
+detach(package:plyr)
 library(dplyr)
 trip.data2 %>%
   group_by(day, hour) %>%
