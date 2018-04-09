@@ -79,6 +79,17 @@ trip.data2$day<- as.factor(trip.data2$day)
 trip.data2
 
 ```
+```{r, message = FALSE, warning = FALSE}
+ggplot(data = trip.data2, aes(x = age, fill = member_gender)) + 
+      geom_histogram(aes(y = ..density..), bins = 25)  +  
+      scale_x_continuous(limits = c(5, 80)) + 
+      facet_wrap(~ user_type, ncol = 2) + 
+      labs(title = "Age by Gender for Different Subscriber Types",
+       x = "Age",
+       y = "Density",
+       caption = "Source: Ford Bike Data",
+       fill = "Gender")
+```
 
 ```{r, message = FALSE, warning = FALSE}
 ggplot(data = trip.data2, aes(x = duration_sec, fill = member_gender)) + 
@@ -95,25 +106,25 @@ Graph #3
 ===
 
 ```{r, message = FALSE, warning = FALSE}
-detach(package:plyr)
+#detach(package:plyr)
 library(dplyr)
 trip.data2 %>%
   group_by(day, hour) %>%
-  summarize(total.rides = n(),
-    avg.duration = mean(duration_sec)) -> day_hour_rides
+  summarize(numrides = n(),
+    avgduration = mean(duration_sec)) -> df
 
-day_hour_rides %>%
+df %>%
   ungroup() %>%
-  select(hour, day, total.rides, avg.duration) %>%
-  mutate(total_duration = total.rides * avg.duration, 
+  select(hour, day, numrides, avgduration) %>%
+  mutate(total_duration = numrides * avgduration, 
          hour = factor(hour, levels = (0:23))) %>%
   group_by(hour, day) %>%
-  summarise(count.rides = sum(total.rides), total.duration = sum(total_duration)) -> df.1
-df.1
+  summarise(countrides = sum(numrides), totalduration = sum(total_duration)) -> df
+df
 ```
 
 ```{r, message = FALSE, warning = FALSE}
-ggplot(data = df.1, aes(x = day, y = hour, fill = count.rides)) + 
+ggplot(data = df, aes(x = day, y = hour, fill = countrides)) + 
   geom_tile() + 
   scale_fill_continuous(low = 'white', high = 'blue') +
   labs(title = "Bike Usage By Hour of Day",
@@ -121,4 +132,13 @@ ggplot(data = df.1, aes(x = day, y = hour, fill = count.rides)) +
        y = "Hour of Day",
        caption = "Source: Ford Bike Data",
        fill = "Number of Rides")
+
+#ggplot(data = df, aes(x = day, y = hour, fill = totalduration)) + 
+#  geom_tile() + 
+#  scale_fill_continuous(low = 'white', high = 'blue') +
+#  labs(title = "Bike Usage By Hour of Day",
+#       x = "Day of Week",
+#       y = "Hour of Day",
+#       caption = "Source: Ford Bike Data",
+#       fill = "Number of Rides")
 ```
