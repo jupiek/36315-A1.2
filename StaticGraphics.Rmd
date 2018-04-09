@@ -22,42 +22,226 @@ library(ggplot2)
 library(tidyverse)
 library(plyr)
 library(ggmap)
+library(geosphere)
+library(gridExtra)
+library(lubridate)
 
 trip.data = read.csv("tripdata.csv")
 
-trip.data = trip.data[trip.data$member_gender != "",]
+trip.data = trip.data[which(trip.data$member_gender != "" | !is.na(trip.data$member_gender)),]
 dim(trip.data)
 head(trip.data)
 ```
 
-Graph #1
+Set-Up for Graph 1
 ===
 
-+ Geological coordinates of the San Francisco Bay Area: 37.778786, -122.350061
+```{r, message = FALSE, warning = FALSE}
+# Find the number of departures and arrivals at each station
+departures = table(trip.data$start_station_id)
+departures = departures[order(as.numeric(names(departures)))]
+arrivals = table(trip.data$end_station_id)
+arrivals = arrivals[order(as.numeric(names(arrivals)))]
+
+# Build a vector of all station id's
+station_id = sort(unique(c(trip.data$start_station_id, trip.data$end_station_id)))
+
+# Build a data frame of station id's, longitudes, latitudes, number of departures, number of arrivals, and total traffic
+station.data = as.data.frame(station_id)
+station.data$latitude
+station.data$longitude
+station.data$departures
+station.data$arrivals
+
+for(i in 1:length(station_id)) {
+  index = which(trip.data$start_station_id == station_id[i])[1]
+  station.data$latitude[i] = trip.data$start_station_latitude[index]
+  station.data$longitude[i] = trip.data$start_station_longitude[index]
+  
+  d.index = which(names(departures) == station_id[i])
+  station.data$departures[i] = ifelse(length(d.index) > 0, departures[d.index], 0)
+  
+  a.index = which(names(arrivals) == station_id[i])
+  station.data$arrivals[i] = ifelse(length(a.index) > 0, arrivals[a.index], 0)
+}
+
+station.data$traffic = station.data$departures + station.data$arrivals
+```
+
+Graph 1
+===
 
 ```{r, message = FALSE, warning = FALSE}
-# Find the number of departures and arrivals 
-# Use data to observe which stations have the highest traffic
-departure.freq = table(trip.data$start_station_id)
-arrival.freq = table(trip.data$end_station_id)
-
-rbind(trip.data$start_station_id, trip.data$end_station_id)[1:5]
-unique(trip.data$start_station_id)
-coordinates = merge(unique(trip.data$start_station_id), trip.data$start_station_latitude)
-                
+# Create map base around the geological coordinates of the San Francisco Bay Area (37.778786, -122.350061)
 map.base = get_map(location = c(lon = -122.350061, lat = 37.778786),
                     source = "google",
                     maptype = "roadmap")
 
+# Create the map plot
+# Points represent each station
+# The points are sized by the amount of traffic that each station receives, with `traffic` representing the number of arrivals plus the number of departures
 map.stations = ggmap(map.base) + 
-  geom_point(data = trip.data, size = departure.freq,
-             aes(x = start_station_longitude, y = start_station_latitude)) +
-  #geom_segment(data = trip.data, 
-  #             lwd = 0.2,
-  #             aes(x = start_station_longitude, y = start_station_latitude, 
-  #                 xend = end_station_longitude, yend = end_station_latitude)) + 
-  scale_x_continuous(limits = c(-122.5, -122.2)) + 
-  scale_y_continuous(limits = c(37.7, 37.9))
+  geom_point(data = station.data, alpha = 0.4,
+             aes(x = longitude, y = latitude, size = traffic)) +
+  scale_x_continuous(limits = c(-122.45, -122.2)) + 
+  scale_y_continuous(limits = c(37.725, 37.9)) +
+  labs(title = "Ford GoBike Stations in the Bay Area",
+       x = "", y = "", 
+       size = "Total amount of traffic\n(arrivals + departures)",
+       caption = "Sources: Ford GoBike Data\nGoogle Maps") +
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(),
+        axis.ticks = element_blank())
 
 map.stations
+```
+
+
+Set-Up for Graph 2
+===
+
++ In this graph, we want to observe trip distances--is there an "optimal distance" for which this means of transportation is used? Does that differ by gender? By age? By user type (subscriber/casual)?
+
+```{r, message = FALSE, warning = FALSE}
+# Create a new column of `trip.data` that categorically assigns member age groups
+# Assumption: Data is collected from 2018, and age is equal to 2018 - member birth year
+trip.data$member_age = 2018 - trip.data$member_birth_year
+
+trip.data$member_age_group
+trip.data$member_age_group[trip.data$member_age <= 24] = "Young Adult"
+trip.data$member_age_group[trip.data$member_age > 24 & trip.data$member_age <= 34] = "Middle Adult"
+trip.data$member_age_group[trip.data$member_age > 34 & trip.data$member_age <= 60] = "Middle Age"
+trip.data$member_age_group[trip.data$member_age > 60] = "Old Age"
+```
+
+
+Graph 2
+===
+
+```{r, message = FALSE, warning = FALSE, fig.height = 10}
+x = as.matrix(trip.data[,c("start_station_longitude", "start_station_latitude")])
+y = as.matrix(trip.data[,c("end_station_longitude", "end_station_latitude")])
+trip.data$distance = distHaversine(x, y)
+
+age.dens = ggplot(trip.data, aes(x = distance, fill = member_age_group)) +
+  geom_density(alpha = 0.5, adjust = 2) + 
+  scale_x_continuous(limits = c(0, 10000)) +
+  labs(title = "Trip Distances by Age Group",
+       x = "Route Distance (m)", y = "Proportion of Trips",
+       fill = "Member Age Group",
+       caption = "Source: Ford GoBike Data")
+
+gender.dens = ggplot(trip.data, aes(x = distance, fill = member_gender)) +
+  geom_density(alpha = 0.5, adjust = 2) + 
+  scale_x_continuous(limits = c(0, 10000)) +
+  labs(title = "Trip Distances by Gender",
+       x = "Route Distance (m)", y = "Proportion of Trips",
+       fill = "Member Gender",
+       caption = "Source: Ford GoBike Data")
+
+type.dens = ggplot(trip.data, aes(x = distance, fill = user_type)) +
+  geom_density(alpha = 0.5, adjust = 2) + 
+  scale_x_continuous(limits = c(0, 10000)) +
+  labs(title = "Trip Distances by User Type",
+       x = "Route Distance (m)", y = "Proportion of Trips",
+       fill = "User Type",
+       caption = "Source: Ford GoBike Data")
+
+grid.arrange(age.dens, gender.dens, type.dens)
+```
+
+
+Set-Up for Graph 3
+===
+
+```{r, message = FALSE, warning = FALSE}
+tcust = trip.data[trip.data$user_type == 'Customer', ]
+tsub = trip.data[trip.data$user_type == 'Subscriber', ]
+trip.data2 <- transform(trip.data, age = as.integer(format(Sys.Date(), "%Y")) - trip.data$member_birth_year)
+tripe.data2 = trip.data2[!(is.na(trip.data2$member_gender) | trip.data2$member_gender==""), ]
+trip.data2 <- transform(trip.data2, day = weekdays(as.Date(trip.data2$start_time)))
+trip.data2 <- transform(trip.data2, hour = hour(trip.data2$start_time))
+trip.data2$hour<- as.factor(trip.data2$hour)
+trip.data2$day<- as.factor(trip.data2$day)
+head(trip.data2)
+```
+
+
+Graph 3
+===
+
+```{r, message = FALSE, warning = FALSE}
+ggplot(data = trip.data2, aes(x = duration_sec, fill = member_gender)) + 
+      geom_histogram(aes(y = ..density..), bins = 50)  +  
+      scale_x_continuous(limits = c(0, 3500)) + 
+      labs(title = "Trip Duration by Gender",
+       x = "Trip Duration (secs)",
+       y = "Density",
+       caption = "Source: Ford GoBike Data",
+       fill = "Gender")
+```
+
+
+Set-Up for Graph 4
+===
+
+```{r, message = FALSE, warning = FALSE}
+detach(package:plyr)
+library(dplyr)
+trip.data2 %>%
+  group_by(day, hour) %>%
+  summarize(total.rides = n(),
+    avg.duration = mean(duration_sec)) -> day_hour_rides
+
+day_hour_rides %>%
+  ungroup() %>%
+  select(hour, day, total.rides, avg.duration) %>%
+  mutate(total_duration = total.rides * avg.duration, 
+         hour = factor(hour, levels = (0:23))) %>%
+  group_by(hour, day) %>%
+  summarise(count.rides = sum(total.rides), total.duration = sum(total_duration)) -> df.1
+df.1
+```
+
+
+Graph 4
+===
+
+```{r, message = FALSE, warning = FALSE}
+ggplot(data = df.1, aes(x = day, y = hour, fill = count.rides)) + 
+  geom_tile() + 
+  scale_fill_continuous(low = 'white', high = 'blue') +
+  labs(title = "Bike Usage By Hour of Day",
+       x = "Day of Week",
+       y = "Hour of Day",
+       caption = "Source: Ford GoBike Data",
+       fill = "Number of Rides")
+```
+
+INSERT ADDITONAL GRAPHS ABOVE THIS SECTION
+===
+
+Extraneous Work: San Francisco Specific Data
+===
+
+```{r, message = FALSE, warning = FALSE}
+# Get all data with longitudes smaller than -122.35, so that we grab only the data relevant to San Francisco
+sf.data = trip.data[which(trip.data$start_station_longitude < -122.35 |
+                            trip.data$end_station_longitude < -122.35),]
+sf.stations = station.data[which(station.data$longitude < -122.35),]
+
+# Create map base around the geological coordinates of San Francisco (37.778786, -122.350061)
+sf.map.base = get_map(location = c(lon = -122.350061, lat = 37.778786),
+                    source = "google",
+                    maptype = "roadmap")
+
+# Create the map plot
+# Points represent each station
+# The points are sized by the amount of traffic that each station receives, with traffic equalling the number of arrivals plus the number of departures
+sf.map.stations = ggmap(map.base) + 
+  geom_point(data = sf.stations, alpha = 0.4,
+             aes(x = longitude, y = latitude, size = traffic)) +
+  scale_x_continuous(limits = c(-122.45, -122.375)) + 
+  scale_y_continuous(limits = c(37.725, 37.825))
+
+sf.map.stations
 ```
