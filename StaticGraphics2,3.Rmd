@@ -67,6 +67,7 @@ Graph #2
 
 
 ```{r, message = FALSE, warning = FALSE}
+library(lubridate)
 tcust = trip.data[trip.data$user_type == 'Customer', ]
 tsub = trip.data[trip.data$user_type == 'Subscriber', ]
 trip.data2 <- transform(trip.data, age = as.integer(format(Sys.Date(), "%Y")) - trip.data$member_birth_year)
