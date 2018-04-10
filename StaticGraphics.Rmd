@@ -157,7 +157,7 @@ Set-Up for Graph 3
 tcust = trip.data[trip.data$user_type == 'Customer', ]
 tsub = trip.data[trip.data$user_type == 'Subscriber', ]
 trip.data2 <- transform(trip.data, age = as.integer(format(Sys.Date(), "%Y")) - trip.data$member_birth_year)
-tripe.data2 = trip.data2[!(is.na(trip.data2$member_gender) | trip.data2$member_gender==""), ]
+trip.data2 = trip.data2[!(is.na(trip.data2$member_gender) | trip.data2$member_gender==""), ]
 trip.data2 <- transform(trip.data2, day = weekdays(as.Date(trip.data2$start_time)))
 trip.data2 <- transform(trip.data2, hour = hour(trip.data2$start_time))
 trip.data2$hour<- as.factor(trip.data2$hour)
@@ -185,7 +185,7 @@ Set-Up for Graph 4
 ===
 
 ```{r, message = FALSE, warning = FALSE}
-detach(package:plyr)
+#detach(package:plyr)
 library(dplyr)
 trip.data2 %>%
   group_by(day, hour) %>%
@@ -216,6 +216,68 @@ ggplot(data = df.1, aes(x = day, y = hour, fill = count.rides)) +
        caption = "Source: Ford GoBike Data",
        fill = "Number of Rides")
 ```
+
+
+Set-Up for Graph 7
+===
+
+```{r}
+#protein = cut(protein, c(-Inf, median(protein), Inf), labels = c("Low", "High"))
+
+trip.data2 %>%
+  group_by(day, hour, age, member_gender) %>%
+  summarize(total.rides = n(),
+            avg.duration = mean(duration_sec)) -> day_age_rides
+
+day_age_rides %>%
+  ungroup() %>%
+  select(hour, day, age, member_gender, total.rides, avg.duration) %>%
+  mutate(total_duration = total.rides * avg.duration, 
+         hour = factor(hour, levels = (0:23)),
+         age_general = cut(age, c(18, 45, 65, Inf), labels = c("Young Adult", "Middle-Aged", "Senior"))) %>%
+  group_by(hour, day, age, age_general, member_gender) %>%
+  summarise(count.rides = sum(total.rides), total.duration = sum(total_duration)) -> df.5
+df.5
+```
+
+Graph 7
+===
+
+```{r}
+ggplot(data = df.5, aes(x = hour, y = count.rides, col = age_general)) + 
+  geom_jitter(alpha = 0.5) +
+  labs(title = "Number of Rides Each Hour of the Day",
+       subtitle = "By Age Group",
+       x = "Hour",
+       y = "Number of Rides",
+       col = "Age Group")
+#scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 80, space = "Lab", name="Age")
+```
+
+
+
+Set-Up for Graph 8
+===
+
+```{r}
+
+```
+
+Graph 8
+===
+
+```{r}
+ggplot(data = df.5, aes(x = hour, y = count.rides, col = member_gender)) + 
+  geom_jitter(alpha = .8) +
+  scale_color_manual(values = c("pink", "skyblue", "grey")) +
+  labs(title = "Number of Rides Each Hour of the Day",
+       subtitle = "By Gender",
+       x = "Hour",
+       y = "Number of Rides",
+       col = "Gender")
+```
+
+
 
 INSERT ADDITONAL GRAPHS ABOVE THIS SECTION
 ===
