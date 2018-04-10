@@ -245,3 +245,38 @@ sf.map.stations = ggmap(map.base) +
 
 sf.map.stations
 ```
+
+
+Graph 5
+
+```{r}
+bikes %>% mutate(weekend = ifelse(wday(start_time) > 5, "Weekend", 
+                                  "Weekday")) %>% 
+  ggplot(aes(x = start_time, color = weekend)) +
+  geom_freqpoly(bins = 27) +
+  labs(title = "Distribution of Bike Usage over Time",
+       x = "Date", 
+       y = "Rides per Week",
+       color = "")
+
+```
+
+Graph 6
+
+```{r}
+popular_stations <- bikes %>% group_by(start_station_name) %>% 
+  count(sort = TRUE) %>% filter(n > 10000)
+
+bikes %>% filter(start_station_name %in% popular_stations$start_station_name) %>% 
+   mutate(weekend = ifelse(wday(start_time) > 5, "Weekend", 
+                                  "Weekday"),
+          start_station_name = start_station_name %>% factor,
+          wday = start_time %>% wday(label = TRUE)) %>% 
+  ggplot(aes(x = start_time, color = start_station_name)) +
+  geom_freqpoly(bins = 27) +
+  labs(title = "Popular Stations over Time", 
+       x = "Date",
+       y = "Rides per Week", 
+       color = "Starting Station")
+  
+```
