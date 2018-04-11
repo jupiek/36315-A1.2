@@ -174,7 +174,7 @@ ggplot(data = trip.data2, aes(x = age, fill = member_gender)) +
       geom_histogram(aes(y = ..density..), bins = 25)  +  
       scale_x_continuous(limits = c(5, 80)) + 
       facet_wrap(~ user_type, ncol = 2) + 
-      labs(title = "Age by Gender for Different Subscriber Types",
+      labs(title = "Different Distributions for Different Subscriber Types",
        x = "Age",
        y = "Density",
        fill = "Gender") + scale_fill_manual(values=c("dark blue", "dark green", "#56B4E9"))
@@ -209,7 +209,7 @@ Graph 4
 ggplot(data = df.1, aes(x = day, y = hour, fill = count.rides)) + 
   geom_tile() + 
   scale_fill_continuous(low = 'white', high = 'dark green') +
-  labs(title = "Bike Usage By Hour of Day",
+  labs(title = "Bike Usage Focused on Weekdays",
        x = "Day of Week",
        y = "Hour of Day",
        fill = "Number of Rides")
