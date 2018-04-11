@@ -294,7 +294,7 @@ day_age_rides %>%
   select(hour, day, age, member_gender, total.rides, avg.duration) %>%
   mutate(total_duration = total.rides * avg.duration, 
          hour = factor(hour, levels = (0:23)),
-         age_general = cut(age, c(0, 24, 45, 65, Inf), labels = c("Young Adult", "Middle Adult, Middle Age", "Senior"))) %>%
+         age_general = cut(age, c(0, 24, 45, 65, Inf), labels = c("Young Adult", "Middle Adult", "Middle Age", "Senior"))) %>%
   group_by(hour, day, age, age_general, member_gender) %>%
   summarise(count.rides = sum(total.rides), total.duration = sum(total_duration)) -> df.5
 df.5
@@ -309,7 +309,7 @@ ggplot(data = df.5, aes(x = hour, y = count.rides, col = age_general)) +
   geom_smooth(method = "loess", aes(x = as.integer(hour), y = count.rides)) +
   coord_flip() +
   scale_color_manual(values = c("goldenrod3", "green4", "blue3", "grey")) +
-  labs(title = "Number of Rides Each Hour of the Day",
+  labs(title = "Exhibit 7: Number of Rides Each Hour of the Day",
        subtitle = "By Age Group",
        x = "Hour",
        y = "Number of Rides",
@@ -327,7 +327,7 @@ ggplot(data = df.5, aes(x = hour, y = count.rides, col = member_gender)) +
   geom_smooth(method = "loess", aes(x = as.integer(hour), y = count.rides)) +
   coord_flip() +
   scale_color_manual(values = c("hotpink2", "dodgerblue2", "grey")) +
-  labs(title = "Number of Rides Each Hour of the Day",
+  labs(title = "Exhibit 8: Number of Rides Each Hour of the Day",
        subtitle = "By Gender",
        x = "Hour",
        y = "Number of Rides",
