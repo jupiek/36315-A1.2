@@ -130,21 +130,24 @@ age.dens = ggplot(trip.data, aes(x = distance, fill = member_age_group)) +
   scale_x_continuous(limits = c(0, 10000)) +
   labs(title = "Trip Distances by Age Group",
        x = "Route Distance (m)", y = "Proportion of Trips",
-       fill = "Member Age Group")
+       fill = "Member Age Group") +
+  scale_fill_manual(values = c("navyblue", "forestgreen", "yellow", "dodgerblue1"))
 
 gender.dens = ggplot(trip.data, aes(x = distance, fill = member_gender)) +
   geom_density(alpha = 0.5, adjust = 2) + 
   scale_x_continuous(limits = c(0, 10000)) +
   labs(title = "Trip Distances by Gender",
        x = "Route Distance (m)", y = "Proportion of Trips",
-       fill = "Member Gender")
+       fill = "Member Gender") +
+  scale_fill_manual(values = c("royalblue4", "yellow", "forestgreen"))
 
 type.dens = ggplot(trip.data, aes(x = distance, fill = user_type)) +
   geom_density(alpha = 0.5, adjust = 2) + 
   scale_x_continuous(limits = c(0, 10000)) +
   labs(title = "Trip Distances by User Type",
        x = "Route Distance (m)", y = "Proportion of Trips",
-       fill = "User Type")
+       fill = "User Type") +
+  scale_fill_manual(values = c("dodgerblue1", "yellowgreen"))
 
 grid.arrange(age.dens, gender.dens, type.dens)
 ```
@@ -177,7 +180,7 @@ ggplot(data = trip.data2, aes(x = age, fill = member_gender)) +
       labs(title = "Different Distributions for Different Subscriber Types",
        x = "Age",
        y = "Density",
-       fill = "Gender") + scale_fill_manual(values=c("dark blue", "dark green", "#56B4E9"))
+       fill = "Gender") + scale_fill_manual(values=c("royalblue4", "forestgreen", "#56B4E9"))
 ```
 
 
