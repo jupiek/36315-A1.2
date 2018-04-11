@@ -93,9 +93,9 @@ map.stations = ggmap(map.base) +
   scale_y_continuous(limits = c(37.725, 37.9)) +
   labs(title = "Exhibit 1: GoBike Stations in the Bay Area",
        x = "", y = "", 
-       size = "Total traffic\narrivals + departures") +
+       size = "Total traffic") +
   theme(axis.text.x = element_blank(), axis.text.y = element_blank(),
-        axis.ticks = element_blank())
+        axis.ticks = element_blank(), legend.position = "bottom")
 
 map.stations
 ```
@@ -127,29 +127,36 @@ trip.data$distance = distHaversine(x, y)
 
 age.dens = ggplot(trip.data, aes(x = distance, fill = member_age_group)) +
   geom_density(alpha = 0.5, adjust = 2) + 
-  scale_x_continuous(limits = c(0, 10000)) +
-  labs(title = "Trip Distances by Age Group",
-       x = "Route Distance (m)", y = "Proportion of Trips",
-       fill = "Member Age Group") +
-  scale_fill_manual(values = c("navyblue", "forestgreen", "yellow", "dodgerblue1"))
+  scale_x_continuous(limits = c(0, 8000)) +
+  labs(title = "",
+       x = "", y = "Proportion of Trips",
+       fill = "By Member Age Group") +
+  scale_fill_manual(values = c("navyblue", "forestgreen", "yellow", "dodgerblue1")) +
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(),
+        plot.margin = unit(c(-0.5, 1, -0.5, 1), "cm"))
 
 gender.dens = ggplot(trip.data, aes(x = distance, fill = member_gender)) +
   geom_density(alpha = 0.5, adjust = 2) + 
-  scale_x_continuous(limits = c(0, 10000)) +
-  labs(title = "Trip Distances by Gender",
-       x = "Route Distance (m)", y = "Proportion of Trips",
-       fill = "Member Gender") +
-  scale_fill_manual(values = c("royalblue4", "yellow", "forestgreen"))
+  scale_x_continuous(limits = c(0, 8000)) +
+  labs(title = "",
+       x = "", y = "Proportion of Trips",
+       fill = "By Member Gender") +
+  scale_fill_manual(values = c("royalblue4", "yellow", "forestgreen")) +
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(),
+        plot.margin = unit(c(1, 1, -0.5, 1), "cm"))
 
 type.dens = ggplot(trip.data, aes(x = distance, fill = user_type)) +
   geom_density(alpha = 0.5, adjust = 2) + 
-  scale_x_continuous(limits = c(0, 10000)) +
-  labs(title = "Trip Distances by User Type",
+  scale_x_continuous(limits = c(0, 8000)) +
+  labs(title = "",
        x = "Route Distance (m)", y = "Proportion of Trips",
-       fill = "User Type") +
-  scale_fill_manual(values = c("dodgerblue1", "yellowgreen"))
+       fill = "By User Type") +
+  scale_fill_manual(values = c("dodgerblue1", "yellowgreen")) +
+  theme(plot.margin = unit(c(-0.5, 1, 1, 1), "cm"))
 
-grid.arrange(age.dens, gender.dens, type.dens, top = "Exhibit 2")
+grid.arrange(age.dens, gender.dens, type.dens, top = "Exhibit 2: Trip Distance by Age Group, Gender, and User Type")
 ```
 
 
@@ -231,18 +238,22 @@ bikes %>% mutate(weekend = ifelse(wday(start_time) > 5, "Weekend",
   scale_x_datetime(limits = c(min(bikes$start_time), 
                               ymd_hms("2017-12-31 23:59:59"))) +
   scale_color_brewer(palette = "Set1") +
-  labs(title = "Distribution of Bike Usage over Time",
+  labs(title = "Exhibit 5: Distribution of Bike Usage over Time",
        x = "Date", 
        y = "Rides per Week",
        color = "")
-
 ```
 
 
 Graph 6
 ===
 
-```{r}
+```{r, warning = FALSE, message = FALSE}
+station.names = strsplit(bikes$start_station_name, " [(]")
+station.names = lapply(station.names, "[[", 1)
+station.names = unlist(station.names)
+bikes$start_station_name = station.names
+
 popular_stations <- 
   bikes %>% mutate(start_station_name = start_station_name %>% 
            stringr::str_replace_all(pattern = " \\(", 
@@ -260,7 +271,7 @@ bikes %>% mutate(start_station_name = start_station_name %>%
   scale_x_datetime(limits = c(min(bikes$start_time), 
                               ymd_hms("2017-12-31 23:59:59"))) +
   scale_color_brewer(palette = "Set1") +
-  labs(title = "Five Most Popular Stations over Time", 
+  labs(title = "Exhibit 6: Five Most Popular Stations over Time", 
        x = "Date",
        y = "Rides per Week", 
        color = "Starting Station")
