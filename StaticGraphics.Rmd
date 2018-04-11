@@ -227,11 +227,15 @@ bikes <- read_csv("tripdata.csv")
 bikes %>% mutate(weekend = ifelse(wday(start_time) > 5, "Weekend", 
                                   "Weekday")) %>% 
   ggplot(aes(x = start_time, color = weekend)) +
-  geom_freqpoly(bins = 27) +
-  labs(title = "Exhibit 5: Distribution of Bike Usage over Time",
+  geom_freqpoly(binwidth = 3600*24*7) +
+  scale_x_datetime(limits = c(min(bikes$start_time), 
+                              ymd_hms("2017-12-31 23:59:59"))) +
+  scale_color_brewer(palette = "Set1") +
+  labs(title = "Distribution of Bike Usage over Time",
        x = "Date", 
        y = "Rides per Week",
        color = "")
+
 ```
 
 
@@ -244,23 +248,22 @@ popular_stations <-
            stringr::str_replace_all(pattern = " \\(", 
                                     replacement = "\n\\(")) %>%
   group_by(start_station_name) %>% 
-  count(sort = TRUE) %>% filter(n > 10000)
+  count(sort = TRUE) %>% filter(n > 11500)
   
 bikes %>% mutate(start_station_name = start_station_name %>% 
            stringr::str_replace_all(pattern = " \\(", 
                                     replacement = "\n\\(")) %>% 
   filter(start_station_name %in% popular_stations$start_station_name) %>% 
-   mutate(weekend = ifelse(wday(start_time) > 5, "Weekend", 
-                                  "Weekday"),
-          start_station_name = start_station_name %>% factor,
-          wday = start_time %>% wday(label = TRUE)) %>% 
+   mutate(start_station_name = start_station_name %>% factor) %>% 
   ggplot(aes(x = start_time, color = start_station_name)) +
   geom_freqpoly(bins = 27) +
-  labs(title = "Exhibit 6: Popular Stations over Time", 
+  scale_x_datetime(limits = c(min(bikes$start_time), 
+                              ymd_hms("2017-12-31 23:59:59"))) +
+  scale_color_brewer(palette = "Set1") +
+  labs(title = "Five Most Popular Stations over Time", 
        x = "Date",
        y = "Rides per Week", 
        color = "Starting Station")
-#bikes$start_station_name[1:10] %>% str_replace_all(pattern = " \\(", replacement = "\n\\(")
 ```
 
 
