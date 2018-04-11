@@ -2,15 +2,12 @@
 title: "Static Graphics Project"
 author: "Julie Kim"
 date: "4/6/2018"
-output:
-  html_document: default
-  pdf_document: default
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-
 
 Read-In
 ===
@@ -23,7 +20,7 @@ Read-In
 ```{r, message = FALSE, warning = FALSE}
 library(ggplot2)
 library(tidyverse)
-library(dplyr)
+library(plyr)
 library(ggmap)
 library(geosphere)
 library(gridExtra)
@@ -31,12 +28,10 @@ library(lubridate)
 
 trip.data = read.csv("tripdata.csv")
 
-trip.data = trip.data[which(!(trip.data$member_gender == "" | is.na(trip.data$member_gender))),]
-trip.data = trip.data[which(!(trip.data$member_birth_year == "" | is.na(trip.data$member_birth_year))),]
+trip.data = trip.data[which(trip.data$member_gender != "" | !is.na(trip.data$member_gender)),]
 dim(trip.data)
 head(trip.data)
 ```
-
 
 Set-Up for Graph 1
 ===
@@ -73,7 +68,6 @@ for(i in 1:length(station_id)) {
 station.data$traffic = station.data$departures + station.data$arrivals
 ```
 
-
 Graph 1
 ===
 
@@ -91,11 +85,12 @@ map.stations = ggmap(map.base) +
              aes(x = longitude, y = latitude, size = traffic)) +
   scale_x_continuous(limits = c(-122.45, -122.2)) + 
   scale_y_continuous(limits = c(37.725, 37.9)) +
-  labs(title = "Exhibit 1: GoBike Stations in the Bay Area",
+  labs(title = "Ford GoBike Stations in the Bay Area",
        x = "", y = "", 
-       size = "Total traffic") +
+       size = "Total amount of traffic\n(arrivals + departures)",
+       caption = "Sources: Ford GoBike Data\nGoogle Maps") +
   theme(axis.text.x = element_blank(), axis.text.y = element_blank(),
-        axis.ticks = element_blank(), legend.position = "bottom")
+        axis.ticks = element_blank())
 
 map.stations
 ```
@@ -110,10 +105,12 @@ Set-Up for Graph 2
 # Create a new column of `trip.data` that categorically assigns member age groups
 # Assumption: Data is collected from 2018, and age is equal to 2018 - member birth year
 trip.data$member_age = 2018 - trip.data$member_birth_year
+
+trip.data$member_age_group
 trip.data$member_age_group[trip.data$member_age <= 24] = "Young Adult"
 trip.data$member_age_group[trip.data$member_age > 24 & trip.data$member_age <= 34] = "Middle Adult"
 trip.data$member_age_group[trip.data$member_age > 34 & trip.data$member_age <= 60] = "Middle Age"
-trip.data$member_age_group[trip.data$member_age > 60] = "Senior"
+trip.data$member_age_group[trip.data$member_age > 60] = "Old Age"
 ```
 
 
@@ -127,36 +124,29 @@ trip.data$distance = distHaversine(x, y)
 
 age.dens = ggplot(trip.data, aes(x = distance, fill = member_age_group)) +
   geom_density(alpha = 0.5, adjust = 2) + 
-  scale_x_continuous(limits = c(0, 8000)) +
-  labs(title = "",
-       x = "", y = "Proportion of Trips",
-       fill = "By Member Age Group") +
-  scale_fill_manual(values = c("navyblue", "forestgreen", "yellow", "dodgerblue1")) +
-  theme(axis.ticks.x = element_blank(),
-        axis.text.x = element_blank(),
-        plot.margin = unit(c(-0.5, 1, -0.5, 1), "cm"))
+  scale_x_continuous(limits = c(0, 10000)) +
+  labs(title = "Trip Distances by Age Group",
+       x = "Route Distance (m)", y = "Proportion of Trips",
+       fill = "Member Age Group",
+       caption = "Source: Ford GoBike Data")
 
 gender.dens = ggplot(trip.data, aes(x = distance, fill = member_gender)) +
   geom_density(alpha = 0.5, adjust = 2) + 
-  scale_x_continuous(limits = c(0, 8000)) +
-  labs(title = "",
-       x = "", y = "Proportion of Trips",
-       fill = "By Member Gender") +
-  scale_fill_manual(values = c("royalblue4", "yellow", "forestgreen")) +
-  theme(axis.ticks.x = element_blank(),
-        axis.text.x = element_blank(),
-        plot.margin = unit(c(1, 1, -0.5, 1), "cm"))
+  scale_x_continuous(limits = c(0, 10000)) +
+  labs(title = "Trip Distances by Gender",
+       x = "Route Distance (m)", y = "Proportion of Trips",
+       fill = "Member Gender",
+       caption = "Source: Ford GoBike Data")
 
 type.dens = ggplot(trip.data, aes(x = distance, fill = user_type)) +
   geom_density(alpha = 0.5, adjust = 2) + 
-  scale_x_continuous(limits = c(0, 8000)) +
-  labs(title = "",
+  scale_x_continuous(limits = c(0, 10000)) +
+  labs(title = "Trip Distances by User Type",
        x = "Route Distance (m)", y = "Proportion of Trips",
-       fill = "By User Type") +
-  scale_fill_manual(values = c("dodgerblue1", "yellowgreen")) +
-  theme(plot.margin = unit(c(-0.5, 1, 1, 1), "cm"))
+       fill = "User Type",
+       caption = "Source: Ford GoBike Data")
 
-grid.arrange(age.dens, gender.dens, type.dens, top = "Exhibit 2: Trip Distance by Age Group, Gender, and User Type")
+grid.arrange(age.dens, gender.dens, type.dens)
 ```
 
 
@@ -167,7 +157,7 @@ Set-Up for Graph 3
 tcust = trip.data[trip.data$user_type == 'Customer', ]
 tsub = trip.data[trip.data$user_type == 'Subscriber', ]
 trip.data2 <- transform(trip.data, age = as.integer(format(Sys.Date(), "%Y")) - trip.data$member_birth_year)
-tripe.data2 = trip.data2[!(is.na(trip.data2$member_gender) | trip.data2$member_gender==""), ]
+trip.data2 = trip.data2[!(is.na(trip.data2$member_gender) | trip.data2$member_gender==""), ]
 trip.data2 <- transform(trip.data2, day = weekdays(as.Date(trip.data2$start_time)))
 trip.data2 <- transform(trip.data2, hour = hour(trip.data2$start_time))
 trip.data2$hour<- as.factor(trip.data2$hour)
@@ -180,14 +170,14 @@ Graph 3
 ===
 
 ```{r, message = FALSE, warning = FALSE}
-ggplot(data = trip.data2, aes(x = age, fill = member_gender)) + 
-      geom_histogram(aes(y = ..density..), bins = 25)  +  
-      scale_x_continuous(limits = c(5, 80)) + 
-      facet_wrap(~ user_type, ncol = 2) + 
-      labs(title = "Exhibit 3: Age Distributions by Subscriber Type",
-       x = "Age",
+ggplot(data = trip.data2, aes(x = duration_sec, fill = member_gender)) + 
+      geom_histogram(aes(y = ..density..), bins = 50)  +  
+      scale_x_continuous(limits = c(0, 3500)) + 
+      labs(title = "Trip Duration by Gender",
+       x = "Trip Duration (secs)",
        y = "Density",
-       fill = "Gender") + scale_fill_manual(values=c("royalblue4", "forestgreen", "#56B4E9"))
+       caption = "Source: Ford GoBike Data",
+       fill = "Gender")
 ```
 
 
@@ -195,6 +185,8 @@ Set-Up for Graph 4
 ===
 
 ```{r, message = FALSE, warning = FALSE}
+#detach(package:plyr)
+library(dplyr)
 trip.data2 %>%
   group_by(day, hour) %>%
   summarize(total.rides = n(),
@@ -207,8 +199,7 @@ day_hour_rides %>%
          hour = factor(hour, levels = (0:23))) %>%
   group_by(hour, day) %>%
   summarise(count.rides = sum(total.rides), total.duration = sum(total_duration)) -> df.1
-
-head(df.1)
+df.1
 ```
 
 
@@ -218,70 +209,71 @@ Graph 4
 ```{r, message = FALSE, warning = FALSE}
 ggplot(data = df.1, aes(x = day, y = hour, fill = count.rides)) + 
   geom_tile() + 
-  scale_fill_continuous(low = 'white', high = 'dark green') +
-  labs(title = "Exhibit 4: Bike Usage Focused on Weekdays",
+  scale_fill_continuous(low = 'white', high = 'blue') +
+  labs(title = "Bike Usage By Hour of Day",
        x = "Day of Week",
        y = "Hour of Day",
-       fill = "Number of Rides") 
+       caption = "Source: Ford GoBike Data",
+       fill = "Number of Rides")
 ```
+
 
 
 Graph 5
 ===
 
-```{r, message = FALSE, warning = FALSE}
+```{r, message = FALSE}
+library(tidyverse)
+library(lubridate)
 bikes <- read_csv("tripdata.csv")
 bikes %>% mutate(weekend = ifelse(wday(start_time) > 5, "Weekend", 
                                   "Weekday")) %>% 
   ggplot(aes(x = start_time, color = weekend)) +
-  geom_freqpoly(binwidth = 3600*24*7) +
-  scale_x_datetime(limits = c(min(bikes$start_time), 
-                              ymd_hms("2017-12-31 23:59:59"))) +
-  scale_color_brewer(palette = "Set1") +
-  labs(title = "Exhibit 5: Distribution of Bike Usage over Time",
+  geom_freqpoly(bins = 27) +
+  labs(title = "Distribution of Bike Usage over Time",
        x = "Date", 
        y = "Rides per Week",
        color = "")
+
 ```
 
 
 Graph 6
 ===
 
-```{r, warning = FALSE, message = FALSE}
-station.names = strsplit(bikes$start_station_name, " [(]")
-station.names = lapply(station.names, "[[", 1)
-station.names = unlist(station.names)
-bikes$start_station_name = station.names
-
+```{r}
 popular_stations <- 
   bikes %>% mutate(start_station_name = start_station_name %>% 
            stringr::str_replace_all(pattern = " \\(", 
                                     replacement = "\n\\(")) %>%
   group_by(start_station_name) %>% 
-  count(sort = TRUE) %>% filter(n > 11500)
+  count(sort = TRUE) %>% filter(n > 10000)
   
 bikes %>% mutate(start_station_name = start_station_name %>% 
            stringr::str_replace_all(pattern = " \\(", 
                                     replacement = "\n\\(")) %>% 
   filter(start_station_name %in% popular_stations$start_station_name) %>% 
-   mutate(start_station_name = start_station_name %>% factor) %>% 
+   mutate(weekend = ifelse(wday(start_time) > 5, "Weekend", 
+                                  "Weekday"),
+          start_station_name = start_station_name %>% factor,
+          wday = start_time %>% wday(label = TRUE)) %>% 
   ggplot(aes(x = start_time, color = start_station_name)) +
   geom_freqpoly(bins = 27) +
-  scale_x_datetime(limits = c(min(bikes$start_time), 
-                              ymd_hms("2017-12-31 23:59:59"))) +
-  scale_color_brewer(palette = "Set1") +
-  labs(title = "Exhibit 6: Five Most Popular Stations over Time", 
+  labs(title = "Popular Stations over Time", 
        x = "Date",
        y = "Rides per Week", 
        color = "Starting Station")
+#bikes$start_station_name[1:10] %>% str_replace_all(pattern = " \\(", replacement = "\n\\(")
 ```
 
 
-Set-Up for Graph 7
+
+Set-Up for Graph 7 & 8
 ===
 
 ```{r}
+#protein = cut(protein, c(-Inf, median(protein), Inf), labels = c("Low", "High"))
+
 trip.data2 %>%
   group_by(day, hour, age, member_gender) %>%
   summarize(total.rides = n(),
@@ -292,27 +284,28 @@ day_age_rides %>%
   select(hour, day, age, member_gender, total.rides, avg.duration) %>%
   mutate(total_duration = total.rides * avg.duration, 
          hour = factor(hour, levels = (0:23)),
-         age_general = cut(age, c(0, 24, 34, 65, Inf), labels = c("Young Adult", "Middle Adult", "Middle Age", "Senior"))) %>%
+         age_general = cut(age, c(18, 45, 65, Inf), labels = c("Young Adult", "Middle-Aged", "Senior"))) %>%
   group_by(hour, day, age, age_general, member_gender) %>%
   summarise(count.rides = sum(total.rides), total.duration = sum(total_duration)) -> df.5
-
-head(df.5)
+df.5
 ```
-
 
 Graph 7
 ===
 
 ```{r}
 ggplot(data = df.5, aes(x = hour, y = count.rides, col = age_general)) + 
-  geom_jitter(alpha = 0.5) +
-  labs(title = "Exhibit 7: Number of Rides Each Hour of the Day",
+  geom_jitter(alpha = 0.1) +
+  geom_smooth(method = "loess", aes(x = as.integer(hour), y = count.rides)) +
+  coord_flip() +
+  scale_color_manual(values = c("goldenrod3", "green4", "blue3", "grey")) +
+  labs(title = "Number of Rides Each Hour of the Day",
        subtitle = "By Age Group",
        x = "Hour",
        y = "Number of Rides",
        col = "Age Group")
-#scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 80, space = "Lab", name="Age")
 ```
+
 
 
 Graph 8
@@ -320,14 +313,17 @@ Graph 8
 
 ```{r}
 ggplot(data = df.5, aes(x = hour, y = count.rides, col = member_gender)) + 
-  geom_jitter(alpha = .8) +
-  scale_color_manual(values = c("pink", "skyblue", "darkgrey", "blue")) +
-  labs(title = "Exhibit 8: Number of Rides Each Hour of the Day",
+  geom_jitter(alpha = .1) +
+  geom_smooth(method = "loess", aes(x = as.integer(hour), y = count.rides)) +
+  coord_flip() +
+  scale_color_manual(values = c("hotpink2", "dodgerblue2", "grey")) +
+  labs(title = "Number of Rides Each Hour of the Day",
        subtitle = "By Gender",
        x = "Hour",
        y = "Number of Rides",
        col = "Gender")
 ```
+
 
 
 INSERT ADDITONAL GRAPHS ABOVE THIS SECTION
@@ -358,5 +354,3 @@ sf.map.stations = ggmap(map.base) +
 
 sf.map.stations
 ```
-
-
