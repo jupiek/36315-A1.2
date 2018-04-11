@@ -91,9 +91,9 @@ map.stations = ggmap(map.base) +
              aes(x = longitude, y = latitude, size = traffic)) +
   scale_x_continuous(limits = c(-122.45, -122.2)) + 
   scale_y_continuous(limits = c(37.725, 37.9)) +
-  labs(title = "Ford GoBike Stations in the Bay Area",
+  labs(title = "Exhibit 1: GoBike Stations in the Bay Area",
        x = "", y = "", 
-       size = "Total amount of traffic\n(arrivals + departures)") +
+       size = "Total traffic\narrivals + departures") +
   theme(axis.text.x = element_blank(), axis.text.y = element_blank(),
         axis.ticks = element_blank())
 
@@ -149,7 +149,7 @@ type.dens = ggplot(trip.data, aes(x = distance, fill = user_type)) +
        fill = "User Type") +
   scale_fill_manual(values = c("dodgerblue1", "yellowgreen"))
 
-grid.arrange(age.dens, gender.dens, type.dens)
+grid.arrange(age.dens, gender.dens, type.dens, top = "Exhibit 2")
 ```
 
 
@@ -177,7 +177,7 @@ ggplot(data = trip.data2, aes(x = age, fill = member_gender)) +
       geom_histogram(aes(y = ..density..), bins = 25)  +  
       scale_x_continuous(limits = c(5, 80)) + 
       facet_wrap(~ user_type, ncol = 2) + 
-      labs(title = "Different Distributions for Different Subscriber Types",
+      labs(title = "Exhibit 3: Age Distributions by Subscriber Type",
        x = "Age",
        y = "Density",
        fill = "Gender") + scale_fill_manual(values=c("royalblue4", "forestgreen", "#56B4E9"))
@@ -212,10 +212,10 @@ Graph 4
 ggplot(data = df.1, aes(x = day, y = hour, fill = count.rides)) + 
   geom_tile() + 
   scale_fill_continuous(low = 'white', high = 'dark green') +
-  labs(title = "Bike Usage Focused on Weekdays",
+  labs(title = "Exhibit 4: Bike Usage Focused on Weekdays",
        x = "Day of Week",
        y = "Hour of Day",
-       fill = "Number of Rides")
+       fill = "Number of Rides") 
 ```
 
 
@@ -228,7 +228,7 @@ bikes %>% mutate(weekend = ifelse(wday(start_time) > 5, "Weekend",
                                   "Weekday")) %>% 
   ggplot(aes(x = start_time, color = weekend)) +
   geom_freqpoly(bins = 27) +
-  labs(title = "Distribution of Bike Usage over Time",
+  labs(title = "Exhibit 5: Distribution of Bike Usage over Time",
        x = "Date", 
        y = "Rides per Week",
        color = "")
@@ -256,7 +256,7 @@ bikes %>% mutate(start_station_name = start_station_name %>%
           wday = start_time %>% wday(label = TRUE)) %>% 
   ggplot(aes(x = start_time, color = start_station_name)) +
   geom_freqpoly(bins = 27) +
-  labs(title = "Popular Stations over Time", 
+  labs(title = "Exhibit 6: Popular Stations over Time", 
        x = "Date",
        y = "Rides per Week", 
        color = "Starting Station")
@@ -292,7 +292,7 @@ Graph 7
 ```{r}
 ggplot(data = df.5, aes(x = hour, y = count.rides, col = age_general)) + 
   geom_jitter(alpha = 0.5) +
-  labs(title = "Number of Rides Each Hour of the Day",
+  labs(title = "Exhibit 7: Number of Rides Each Hour of the Day",
        subtitle = "By Age Group",
        x = "Hour",
        y = "Number of Rides",
@@ -308,7 +308,7 @@ Graph 8
 ggplot(data = df.5, aes(x = hour, y = count.rides, col = member_gender)) + 
   geom_jitter(alpha = .8) +
   scale_color_manual(values = c("pink", "skyblue", "darkgrey", "blue")) +
-  labs(title = "Number of Rides Each Hour of the Day",
+  labs(title = "Exhibit 8: Number of Rides Each Hour of the Day",
        subtitle = "By Gender",
        x = "Hour",
        y = "Number of Rides",
