@@ -1,0 +1,302 @@
+---
+title: "36-315 Homework 10, Spring 2018"
+author: "Ross Hemmel (rhemmel), Joshua Huang (jzh1), Julie Kim (juliek1), Jinhee Lee (jinheel1)"
+date: "Due Wednesday, April 18, 2018 (11:59pm) on Canvas"
+output: 
+  html_document:
+    toc:  true
+    toc_float:  true
+    code_folding:  show
+---
+
+#  Homework 10: An Interesting Duo - Networks and Time Series
+
+***
+***
+
+# Problem 0
+
+* "We used Google's R style guide."
+* "We used Hadley Wickham's R style guide."
+
+* "This submission is for the following group: Ross Hemmel (rhemmel), Joshua Huang (jzh1), Julie Kim (juliek1), Jinhee Lee (jinheel1)
+
+***
+***
+
+
+#  Problem 1
+
+a.
+
+b.
+
+```{r, warning = FALSE, message = FALSE}
+library(tidyverse)
+love_adjacency <- read_csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/love-actually/love_actually_adjacencies.csv")
+```
+
+c. `ggraph` is an extention of `ggplot2` that allows a user to create network graphs with `ggplot2`. `ggraph` uses the `theme_graph()` function to override the typical `ggplot2` theme. `facet_nodes()`, `facet_edges()` and `facet_graph()` allow the user to plot marginal graphs by separating the data by some chosen variable.
+
+d. 
+
+```{r, warning = FALSE, message = FALSE}
+library(igraph)
+library(ggraph)
+
+actor_names <- love_adjacency[,1]
+LA_graph <- graph_from_adjacency_matrix(as.dist(love_adjacency[,-1]))
+
+ggraph(LA_graph, layout = "kk") +
+  geom_edge_link() +
+  geom_node_label(aes(label = actor_names), size = 1.75) +
+  theme_graph() +
+  labs(title = "\"Love Actually\" Character Interactions",
+       caption = "fivethirtyeight.com")
+```
+
+e. 
+
+```{r}
+LA_graph_weighted <- graph_from_adjacency_matrix(as.matrix(love_adjacency[,-1]),
+                                        weighted = TRUE)
+
+ggraph(LA_graph_weighted, layout = "lgl") +
+  geom_edge_link(aes(edge_width = weight)) +
+  scale_edge_width(range = c(0.5, 3)) +
+  geom_node_label(aes(label = actor_names), size = 1.75) +
+  theme_graph() +
+  labs(title = "Relative Shared Screen Time of Characters in \"Love Actually\"",
+       edge_width = "Relative Time",
+       caption = "fivethirtyeight.com")
+
+```
+
+
+***
+***
+
+#  Problem 2
+
+a. 
+
+```{r, warning = F, message = F}
+library(tidyverse)
+
+# Only use the June 2016 subset
+bike <- read_csv("https://github.com/mateyneykov/315_code_data/raw/master/data/nyc-citi-bike-data-subset.csv")
+#  Add start_date variable
+bike <- mutate(bike,
+               start_date = as.Date(starttime, format = "%m/%d/%Y"))
+
+```
+
++  `bike` has 4359 rows and 17 columns
++  The earliest trip date is `r bike$start_date %>% min`, and the latest trip date is `r bike$start_date %>% max`.
+
+b.
+
+```{r, warning = FALSE, message = FALSE}
+#  Summarize bike, creating a new data.frame that includes the number 
+#  of trips taken on each day
+
+trips_per_day <- bike %>%
+  group_by(start_date) %>%
+  summarize(n_trips = n())
+
+#  Create a time series plot with the dates on the x-axis and the number of
+#  trips per day on the y-axis
+
+ggplot(trips_per_day, aes(x = start_date, y = n_trips)) + geom_line() + 
+  scale_x_date(date_breaks = "1 week", date_labels = "%B %d") +
+  labs(title = "CitiBike Trips per Day",
+       x = "Day",
+       y = "Count",
+       caption = "https://www.citibikenyc.com/system-data") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+c. 
+
+```{r, warning = FALSE, message = FALSE}
+#  Summarize bike, creating a new data.frame that includes the number 
+#  of trips taken on each day, split by usertype
+trips_per_day_usertype <- bike %>%
+  group_by(start_date, usertype) %>% summarize(n_trips = n())
+
+#  Create a time series plot with the dates on the x-axis and the number of
+#  trips per day on the y-axis, split by usertype
+
+ggplot(trips_per_day_usertype, aes(x = start_date, y = n_trips, color = usertype)) + 
+  geom_line() + 
+  scale_x_date(date_breaks = "1 week", date_labels = "%B %d") +
+  labs(title = "CitiBike Trips per Day by User Type",
+       x = "Day",
+       y = "Count",
+       color = " ",
+       caption = "https://www.citibikenyc.com/system-data") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+The time-series shows more variability in the number of rides per day for customers. This makes sense, as someone who bought a membership to the service seems more likely to consistently use it. Customers may come and go based on holidays, weekends or other factors.
+
+d.
+```{r, warning=F, message=F}
+library(ggseas)
+
+ggplot(trips_per_day_usertype, aes(x = start_date, y = n_trips, color = usertype)) + 
+  geom_line() + 
+  stat_rollapplyr(width = 7, align = "right", size = 1.5) +
+  scale_x_date(date_breaks = "1 week", date_labels = "%B %d") +
+  labs(title = "CitiBike Trips per Day by User Type with Rolling Average",
+       subtitle = "Average Trips per 7 Days Consistent for Subscribers", 
+       x = "Day",
+       y = "Count",
+       color = " ",
+       caption = "https://www.citibikenyc.com/system-data") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+There is more fluctuation in the moving average of customers than in that of the subscribers.
+
+***
+***
+
+
+#  Problem 3
+
+(20 points)
+
+**Understanding Autocorrelations and Autocorrelation Plots**
+
+a. *(5 points)  Autocorrelations are just the correlation of a time series with itself at different lags.  Let's start by looking at a totally random, made up time series:  `rand_ts <- rnorm(1000)`.  This is just a bunch of random numbers from a Normal(0, 1) distribution.  Use `acf(rand_ts, plot = FALSE)` to look at the correlation of the "time series" and itself at different lags.  Since this "time series" is just 1000 random draws from a Normal(0, 1) distribution, most of the autocorrelations should be near zero.*
+
++  *Is this true?*  
++  *Which autocorrelation is NOT near zero?*  
++  *Does this make sense?  Why or why not?*
+
+b. *(5 points) Autocorrelation plots show the correlation between the time series and itself at all of the different possible lags.  The (auto)correlations are plotted on the y-axis, and the lags are shown on the x-axis.  Create an autocorrelation plot of the random time series from (a), using base R graphics.  To do this, just type `acf(rand_ts, plot = TRUE)`.  In the resulting plot, the blue dotted lines indicate statistical significance.  Any correlation above the positive blue line or below the negative blue line is significantly different from zero.*
+
++  *Are any of the autocorrelations significantly different from zero in your plot?*  
++  *Does this make sense?  Why or why not?*
+
+
+c. *(10 points)  Create two autocorrelation plots of the `trips_per_day_usertype` time series:  One for subscribers, and one for customers. First, we create the two autocorrelation time series.*
+
+```{r, warning = FALSE, message = FALSE}
+#bike_customer_acf <- acf(filter(trips_per_day_usertype,
+#                                usertype == "Customer")$n_trips,
+#                         plot = FALSE)
+#bike_subsciber_acf <- acf(filter(trips_per_day_usertype,
+#                                 usertype == "Subscriber")$n_trips,
+#                          plot = FALSE)
+```
+
+*And then we generate the both of them using ggplot. Here below we only generate the plot for the customer auto correlation function.*
+
+```{r}
+#bike_customer_acf_df <- with(bike_customer_acf, data.frame(lag,acf))
+#ggplot(bike_customer_acf_df, aes(x = lag, y= acf)) + geom_col()
+```
+
+*Generate the autocorrelation plot for the subscribers as well.*
+
+*Add to **both** plots*:
+
++ *An appropriate title*
++ *An appropriate source*
++ *Appropriate axis labels*
+
+*In both time series, you should see that the ACF has its greatest peak at `lag=7`. How do you interpret this, considering that we computed the ACFs on daily-level data? Does it make sense, given the context of the data (number of rental bike trips per day)?*
+
+***
+***
+
+
+#  Problem 4 (optional, ungraded)
+
+(0 points)
+
+This is an optional practice problem, designed to teach you how to (1) use `igraph` to compute simple statistics on a network dataset, (2) make plots with the `ggnetwork` package instead of `ggraph`, and (3) graph a directed network instead of Problem 1's undirected network.
+
+We encourage you to do this practice problem, especially if you are using a network dataset for your poster project, but no credit will be given for submitting it.
+
+**Directed networks, `igraph`, and `ggnetwork`**
+
+The `igraph` package makes network analysis easy!  Install and load the `igraph` and `igraphdata` packages.  Load the `UKfaculty` network into `R`:
+
+```{r, warning = FALSE, message = FALSE}
+#install.packages("igraph")
+#install.packages("igraphdata")
+library(igraph)
+library(igraphdata)
+data(UKfaculty)
+```
+
+
+a. Try out some of the built-in functions in the `igraph` package in order to summarize the UK faculty network:
++ How many nodes ("vertices") are in the network?  (Hint: use `vcount()`.)  
++ How many edges ("links") are in the network?  (Hint: use `ecount()`.)
+
+b. Each of the node of this network is the personal friendship network of a faculty of a UK university. In order to get a vector of the node labels, you can use the function `V()`. Save this vector as `graph_node_label`.
+
+c. The `igraph` package has some built-in functions for analyzing both the in-degree and out-degree of the nodes in the network. Use the `igraph` function `degree` to get:
+
++ The in-degrees of all nodes. Save them as `in_degree_count`. (Hint: set the `mode` argument as `'in'` in the `degree` function)
++ The out-degrees of all nodes. Save them as `out_degree_count`. (Hint: set the `mode` argument as `'out'` in the `degree` function)
+
+Partial code is provided below.
+
+```{r}
+in_degree_count <- degree(UKfaculty, mode = "in")
+
+# Also compute out_degree_count here
+```
+
+
+d. Create now a dataframe with the three vectors created above, containing the nodes labels, in-degrees, and out-degrees respectively. (You may need to `cbind()` the vectors together, then save the result as a data frame.) Create a scatterplot of the in-degrees versus the out-degrees and comment on whether there seems to be any relationship between the two.
+
+e. Let's actually visualize the network itself!  Install and load the `ggnetwork` package.  This package is decently new (you can read more about how to use it [in this article on the package](http://www.r-bloggers.com/ggnetwork-network-geometries-for-ggplot2/).
+
+You'll also need to install and load the `intergraph` package in order to use `igraph` objects with `ggnetwork`.  Finally, depending on which version of `ggplot2`, `R`, and RStudio you're running, you may need to update your packages to the latest versions that are on GitHub (see the first commented lines of code below).
+
+Visualize the UK faculty network using the code below.
+Be sure to:
+
++ Add a title
++ Add a caption 
++ Remove the x- and y-axis labels
++ Remove the x- and y-axis tick marks
++ Adjust the `color` legend
++ Adjust the `size` legend
+
+```{r, warning = FALSE, message = FALSE}
+## Run these only if install.packages() does not work for you
+#devtools::install_github("briatte/ggnetwork")
+#devtools::install_github("mbojan/intergraph")
+
+library(ggnetwork)
+library(intergraph)
+
+uk_data <- fortify(UKfaculty)
+uk_in_degrees <- in_degree_count[match(uk_data$vertex.names,
+                                       1:length(in_degree_count))]
+uk_data$in_degree <- uk_in_degrees
+ggplot(uk_data, 
+       aes(x, y, xend = xend, yend = yend)) +
+  geom_edges(arrow = arrow(length = unit(0.3, "lines")), 
+             aes(color = as.factor(Group)), alpha = 0.5) +
+  geom_nodetext(aes(label = vertex.names, size = in_degree * 1.5), 
+                color = "blue", fontface = "bold")
+```
+
+f. Look at the network plot above:
+
++ How many groups ("cliques") do there appear to be?  
++ What does the size of the nodes correspond to?  
++ What does the color of the edges correspond to?  
++ Is the graph a directed or an undirected graph?
+
+***
+***
+
