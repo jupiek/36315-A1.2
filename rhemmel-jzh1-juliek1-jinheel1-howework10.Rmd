@@ -141,7 +141,7 @@ ggplot(trips_per_day_usertype, aes(x = start_date, y = n_trips, color = usertype
 The time-series shows more variability in the number of rides per day for customers. This makes sense, as someone who bought a membership to the service seems more likely to consistently use it. Customers may come and go based on holidays, weekends or other factors.
 
 d.
-```{r, warning=F, message=F}
+```{r, warning=F, message=F, error = F}
 library(ggseas)
 
 ggplot(trips_per_day_usertype, aes(x = start_date, y = n_trips, color = usertype)) + 
@@ -175,28 +175,58 @@ a. *(5 points)  Autocorrelations are just the correlation of a time series with 
 +  *Which autocorrelation is NOT near zero?*  
 +  *Does this make sense?  Why or why not?*
 
+```{r}
+rand_ts <- rnorm(1000)
+
+acf(rand_ts, plot = FALSE)
+```
+
+Most autocorrelations are near zero, EXCEPT the first (0). This makes sense because there is no lag at that point. There should be no difference at this lag time.
+
+
 b. *(5 points) Autocorrelation plots show the correlation between the time series and itself at all of the different possible lags.  The (auto)correlations are plotted on the y-axis, and the lags are shown on the x-axis.  Create an autocorrelation plot of the random time series from (a), using base R graphics.  To do this, just type `acf(rand_ts, plot = TRUE)`.  In the resulting plot, the blue dotted lines indicate statistical significance.  Any correlation above the positive blue line or below the negative blue line is significantly different from zero.*
 
 +  *Are any of the autocorrelations significantly different from zero in your plot?*  
 +  *Does this make sense?  Why or why not?*
 
+```{r}
+acf(rand_ts, plot = TRUE)
+```
+
+None of the autocorrelations are significantly different from zero in the plot. This makes sense because we've seen most of the autocorrelations (besides lag = 0) are 0.
+
 
 c. *(10 points)  Create two autocorrelation plots of the `trips_per_day_usertype` time series:  One for subscribers, and one for customers. First, we create the two autocorrelation time series.*
 
 ```{r, warning = FALSE, message = FALSE}
-#bike_customer_acf <- acf(filter(trips_per_day_usertype,
-#                                usertype == "Customer")$n_trips,
-#                         plot = FALSE)
-#bike_subsciber_acf <- acf(filter(trips_per_day_usertype,
-#                                 usertype == "Subscriber")$n_trips,
-#                          plot = FALSE)
+bike_customer_acf <- acf(filter(trips_per_day_usertype,
+                                usertype == "Customer")$n_trips,
+                         plot = FALSE)
+bike_subscriber_acf <- acf(filter(trips_per_day_usertype,
+                                 usertype == "Subscriber")$n_trips,
+                          plot = FALSE)
 ```
 
-*And then we generate the both of them using ggplot. Here below we only generate the plot for the customer auto correlation function.*
+*And then we generate the both of them using ggplot.*
 
 ```{r}
-#bike_customer_acf_df <- with(bike_customer_acf, data.frame(lag,acf))
-#ggplot(bike_customer_acf_df, aes(x = lag, y= acf)) + geom_col()
+library(gridExtra)
+bike_customer_acf_df <- with(bike_customer_acf, data.frame(lag,acf))
+bike_customer_acf_plot <- ggplot(bike_customer_acf_df, aes(x = lag, y= acf)) + geom_col() +
+  labs(title = "Bike Trips per Day (Customers)",
+       x = "Lag",
+       y = "Auto Correlation",
+       caption = "Source: NYC Citi Bike")
+
+
+bike_subscriber_acf_df <- with(bike_subscriber_acf, data.frame(lag, acf))
+bike_subscriber_acf_plot <- ggplot(bike_subscriber_acf_df, aes(x = lag, y = acf)) + geom_col() +
+  labs(title = "Bike Trips per Day (Subscribers)",
+       x = "Lag",
+       y = "Auto Correlation",
+       caption = "Source: NYC Citi Bike")
+
+grid.arrange(bike_customer_acf_plot, bike_subscriber_acf_plot, ncol = 1)
 ```
 
 *Generate the autocorrelation plot for the subscribers as well.*
@@ -208,6 +238,8 @@ c. *(10 points)  Create two autocorrelation plots of the `trips_per_day_usertype
 + *Appropriate axis labels*
 
 *In both time series, you should see that the ACF has its greatest peak at `lag=7`. How do you interpret this, considering that we computed the ACFs on daily-level data? Does it make sense, given the context of the data (number of rental bike trips per day)?*
+
+Lag = 7 is indicative of a correlation in the data with itself when offset by 7 (days). This makes sense, as people would likely bike more consistently on the same day of the week, i.e. a person who bikes on Mondays is likely to bike again 7 days later, the next Monday.
 
 ***
 ***
